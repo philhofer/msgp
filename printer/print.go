@@ -6,7 +6,7 @@ import (
 	"github.com/tinylib/msgp/gen"
 	"github.com/tinylib/msgp/parse"
 	"github.com/ttacon/chalk"
-	"golang.org/x/tools/imports"
+	"github.com/golang/tools/imports"
 	"io"
 	"io/ioutil"
 	"strings"
