@@ -131,7 +131,10 @@ var builtins = map[string]struct{}{
 }
 
 // common data/methods for every Elem
-type common struct{ vname, alias string }
+type common struct {
+	vname, alias string
+	omitEmpty    bool
+}
 
 func (c *common) SetVarname(s string) { c.vname = s }
 func (c *common) Varname() string     { return c.vname }
@@ -406,6 +409,7 @@ type StructField struct {
 	RawTag    string // the full struct tag
 	FieldName string // the name of the struct field
 	FieldElem Elem   // the field type
+	OmitEmpty bool   // don't serialize empty field
 }
 
 type ShimMode int

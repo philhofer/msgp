@@ -204,6 +204,8 @@ func strToMethod(s string) gen.Method {
 		return gen.Test
 	case "size":
 		return gen.Size
+	case "omitempty":
+		return gen.OmitEmpty
 	case "marshal":
 		return gen.Marshal
 	case "unmarshal":
@@ -335,6 +337,7 @@ func (fs *FileSet) parseFieldList(fl *ast.FieldList) []gen.StructField {
 func (fs *FileSet) getField(f *ast.Field) []gen.StructField {
 	sf := make([]gen.StructField, 1)
 	var extension bool
+	var omitEmpty bool
 	// parse tag; otherwise field name is field tag
 	if f.Tag != nil {
 		body := reflect.StructTag(strings.Trim(f.Tag.Value, "`")).Get("msg")
@@ -342,8 +345,15 @@ func (fs *FileSet) getField(f *ast.Field) []gen.StructField {
 			body = reflect.StructTag(strings.Trim(f.Tag.Value, "`")).Get("msgpack")
 		}
 		tags := strings.Split(body, ",")
-		if len(tags) == 2 && tags[1] == "extension" {
-			extension = true
+		if len(tags) > 1 {
+			for _, tag := range tags {
+				if tag == "extension" {
+					extension = true
+				}
+				if tag == "omitempty" {
+					omitEmpty = true
+				}
+			}
 		}
 		// ignore "-" fields
 		if tags[0] == "-" {
@@ -352,6 +362,7 @@ func (fs *FileSet) getField(f *ast.Field) []gen.StructField {
 		sf[0].FieldTag = tags[0]
 		sf[0].RawTag = f.Tag.Value
 	}
+	sf[0].OmitEmpty = omitEmpty
 
 	ex := fs.parseExpr(f.Type)
 	if ex == nil {

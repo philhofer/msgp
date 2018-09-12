@@ -61,6 +61,34 @@ type TestType struct {
 	SlicePtr   *[]string
 }
 
+type TestOmit struct {
+	F   *float64          `msg:"float,omitempty"`
+	Els map[string]string `msg:"elements,omitempty"`
+	Obj struct {          // test anonymous struct
+		ValueA string `msg:"value_a,omitempty"`
+		ValueB []byte `msg:"value_b,omitempty"`
+	} `msg:"object,omitempty"`
+	Child      *TestOmit   `msg:"child,omitempty"`
+	Time       time.Time   `msg:"time,omitempty"`
+	Any        interface{} `msg:"any,omitempty"`
+	Appended   msgp.Raw    `msg:"appended,omitempty"`
+	Num        msgp.Number `msg:"num,omitempty"`
+	Byte       byte        `msg:"byte,omitempty"`
+	Rune       rune        `msg:"rune,omitempty"`
+	RunePtr    *rune       `msg:"rune_ptr,omitempty"`
+	RunePtrPtr **rune      `msg:"rune_ptr_ptr,omitempty"`
+	RuneSlice  []rune      `msg:"rune_slece,omitempty"`
+	Slice1     []string    `msg:"slice1,omitempty"`
+	Slice2     []string    `msg:"slice2,omitempty"`
+	SlicePtr   *[]string   `msg:"slice_ptr,omitempty"`
+}
+
+type TestPart struct {
+	Time   time.Time `msg:"time"`
+	Byte   byte      `msg:"byte"`
+	Slice1 []string  `msg:"slice1"`
+}
+
 //msgp:tuple Object
 type Object struct {
 	ObjectNo string   `msg:"objno"`
@@ -120,6 +148,15 @@ type Things struct {
 	Arr2  [4]float64                        `msg:"arr2"`           // test basic lit array
 	Ext   *msgp.RawExtension                `msg:"ext,extension"`  // test extension
 	Oext  msgp.RawExtension                 `msg:"oext,extension"` // test extension reference
+}
+
+type ThingsOmit struct {
+	Cmplx complex64                         `msg:"complex,omitempty"` // test slices
+	Vals  []int32                           `msg:"values,omitempty"`
+	Arr   [msgp.ExtensionPrefixSize]float64 `msg:"arr,omitempty"`            // test const array and *ast.SelectorExpr as array size
+	Arr2  [4]float64                        `msg:"arr2,omitempty"`           // test basic lit array
+	Ext   *msgp.RawExtension                `msg:"ext,extension,omitempty"`  // test extension
+	Oext  msgp.RawExtension                 `msg:"oext,extension,omitempty"` // test extension reference
 }
 
 //msgp:shim SpecialID as:[]byte using:toBytes/fromBytes
@@ -195,6 +232,13 @@ type Custom struct {
 	Mp    map[string]*Embedded `msg:"mp"`
 	Enums []MyEnum             `msg:"enums"` // test explicit enum shim
 	Some  FileHandle           `msg:file_handle`
+}
+
+type CustomOmit struct {
+	Bts   CustomBytes          `msg:"bts,omitempty"`
+	Mp    map[string]*Embedded `msg:"mp,omitempty"`
+	Enums []MyEnum             `msg:"enums,omitempty"` // test explicit enum shim
+	Some  FileHandle           `msg:file_handle,omitempty`
 }
 
 type Files []*os.File

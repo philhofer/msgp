@@ -106,20 +106,57 @@ func (e *encodeGen) appendraw(bts []byte) {
 
 func (e *encodeGen) structmap(s *Struct) {
 	nfields := len(s.Fields)
-	data := msgp.AppendMapHeader(nil, uint32(nfields))
-	e.p.printf("\n// map header, size %d", nfields)
-	e.Fuse(data)
-	if len(s.Fields) == 0 {
+	flags := make([]string, nfields)
+
+	omit := &omitemptyGen{p: e.p}
+	prefix := randIdent()
+	omitCount := 0
+	for i, field := range s.Fields {
+		if field.OmitEmpty {
+			omit.expr = ""
+			next(omit, field.FieldElem)
+			if omit.expr != "" {
+				flags[i] = fmt.Sprintf("%s%d", prefix, i)
+				e.p.printf("\n%s := %s", flags[i], omit.expr)
+				omitCount++
+			}
+		}
+	}
+
+	if omitCount == 0 {
+		data := msgp.AppendMapHeader(nil, uint32(nfields))
+		e.p.printf("\n// map header, size %d", nfields)
+		e.Fuse(data)
+		if len(s.Fields) == 0 {
+			e.fuseHook()
+		}
+	} else {
+		e.p.printf("\n// map header")
+		e.p.printf("\nvar %s uint32 = %d", prefix, nfields-omitCount)
+		for _, flag := range flags {
+			if flag != "" {
+				e.p.printf("\nif !%s {%s ++}", flag, prefix)
+			}
+		}
 		e.fuseHook()
+		e.writeAndCheck(mapHeader, literalFmt, prefix)
 	}
 	for i := range s.Fields {
 		if !e.p.ok() {
 			return
 		}
-		data = msgp.AppendString(nil, s.Fields[i].FieldTag)
 		e.p.printf("\n// write %q", s.Fields[i].FieldTag)
+		if flags[i] != "" {
+			e.fuseHook()
+			e.p.printf("\nif !%s {", flags[i])
+		}
+		data := msgp.AppendString(nil, s.Fields[i].FieldTag)
 		e.Fuse(data)
 		next(e, s.Fields[i].FieldElem)
+		if flags[i] != "" {
+			e.fuseHook()
+			e.p.closeblock()
+		}
 	}
 }
 

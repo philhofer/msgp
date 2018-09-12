@@ -100,23 +100,59 @@ func (m *marshalGen) tuple(s *Struct) {
 }
 
 func (m *marshalGen) mapstruct(s *Struct) {
-	data := make([]byte, 0, 64)
-	data = msgp.AppendMapHeader(data, uint32(len(s.Fields)))
-	m.p.printf("\n// map header, size %d", len(s.Fields))
-	m.Fuse(data)
-	if len(s.Fields) == 0 {
+	nfields := len(s.Fields)
+	flags := make([]string, nfields)
+
+	omit := &omitemptyGen{p: m.p}
+	prefix := randIdent()
+	omitCount := 0
+	for i, field := range s.Fields {
+		if field.OmitEmpty {
+			omit.expr = ""
+			next(omit, field.FieldElem)
+			if omit.expr != "" {
+				flags[i] = fmt.Sprintf("%s%d", prefix, i)
+				m.p.printf("\n%s := %s", flags[i], omit.expr)
+				omitCount++
+			}
+		}
+	}
+
+	if omitCount == 0 {
+		data := msgp.AppendMapHeader(nil, uint32(nfields))
+		m.p.printf("\n// map header, size %d", nfields)
+		m.Fuse(data)
+		if len(s.Fields) == 0 {
+			m.fuseHook()
+		}
+	} else {
+		m.p.printf("\n// map header")
+		m.p.printf("\nvar %s uint32 = %d", prefix, nfields-omitCount)
+		for _, flag := range flags {
+			if flag != "" {
+				m.p.printf("\nif !%s {%s ++}", flag, prefix)
+			}
+		}
 		m.fuseHook()
+		m.rawAppend(mapHeader, literalFmt, prefix)
 	}
 	for i := range s.Fields {
 		if !m.p.ok() {
 			return
 		}
-		data = msgp.AppendString(nil, s.Fields[i].FieldTag)
-
-		m.p.printf("\n// string %q", s.Fields[i].FieldTag)
+		m.p.printf("\n// write %q", s.Fields[i].FieldTag)
+		if flags[i] != "" {
+			m.fuseHook()
+			m.p.printf("\nif !%s {", flags[i])
+		}
+		data := msgp.AppendString(nil, s.Fields[i].FieldTag)
 		m.Fuse(data)
 
 		next(m, s.Fields[i].FieldElem)
+		if flags[i] != "" {
+			m.fuseHook()
+			m.p.closeblock()
+		}
 	}
 }
 

@@ -40,6 +40,7 @@ var (
 	file       = flag.String("file", "", "input file")
 	encode     = flag.Bool("io", true, "create Encode and Decode methods")
 	marshal    = flag.Bool("marshal", true, "create Marshal and Unmarshal methods")
+	omitempty  = flag.Bool("omitempty", true, "create ShouldOmitAsEmpty methods")
 	tests      = flag.Bool("tests", true, "create tests and benchmarks")
 	unexported = flag.Bool("unexported", false, "also process unexported types")
 )
@@ -62,6 +63,9 @@ func main() {
 	}
 	if *marshal {
 		mode |= (gen.Marshal | gen.Unmarshal | gen.Size)
+	}
+	if *omitempty {
+		mode |= (gen.OmitEmpty)
 	}
 	if *tests {
 		mode |= gen.Test

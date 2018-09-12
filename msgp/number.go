@@ -27,6 +27,10 @@ type Number struct {
 	typ  Type
 }
 
+func (n *Number) ShouldOmitAsEmpty() bool {
+	return n.bits == 0
+}
+
 // AsInt sets the number to an int64.
 func (n *Number) AsInt(i int64) {
 

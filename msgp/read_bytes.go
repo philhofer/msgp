@@ -55,6 +55,10 @@ func IsNil(b []byte) bool {
 // data without interpreting its contents.
 type Raw []byte
 
+func (r Raw) ShouldOmitAsEmpty() bool {
+	return len(r) == 0
+}
+
 // MarshalMsg implements msgp.Marshaler.
 // It appends the raw contents of 'raw'
 // to the provided byte slice. If 'raw'
