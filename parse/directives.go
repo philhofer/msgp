@@ -21,9 +21,10 @@ type passDirective func(gen.Method, []string, *gen.Printer) error
 // to add a directive, define a func([]string, *FileSet) error
 // and then add it to this list.
 var directives = map[string]directive{
-	"shim":   applyShim,
-	"ignore": ignore,
-	"tuple":  astuple,
+	"shim":      applyShim,
+	"ignore":    ignore,
+	"tuple":     astuple,
+	"intercept": applyIntercept,
 }
 
 var passDirectives = map[string]passDirective{
@@ -91,6 +92,7 @@ func applyShim(text []string, f *FileSet) error {
 
 	infof("%s -> %s\n", name, be.Value.String())
 	f.findShim(name, be)
+	f.Identities[name] = be
 
 	return nil
 }
@@ -126,5 +128,28 @@ func astuple(text []string, f *FileSet) error {
 			}
 		}
 	}
+	return nil
+}
+
+//msgp:intercept {Type} using:{Provider}
+func applyIntercept(text []string, f *FileSet) error {
+	if len(text) != 3 {
+		return fmt.Errorf("invalid syntax. expected 'msgp:intercept Type using:ProviderFunc'")
+	}
+
+	t := strings.TrimSpace(text[1])
+	using := strings.TrimPrefix(strings.TrimSpace(text[2]), "using:")
+
+	be := gen.Ident(t)
+	be.SetProvider(using)
+	f.findShim(t, be)
+	if ident, ok := f.Identities[t]; ok {
+		if p, ok := ident.(gen.Intercepted); ok {
+			p.SetProvider(using)
+		} else {
+			return fmt.Errorf("attempted to intercept unexpeted type %T", ident)
+		}
+	}
+
 	return nil
 }

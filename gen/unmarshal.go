@@ -128,7 +128,11 @@ func (u *unmarshalGen) gBase(b *BaseElem) {
 	case Ext:
 		u.p.printf("\nbts, err = msgp.ReadExtensionBytes(bts, %s)", lowered)
 	case IDENT:
-		u.p.printf("\nbts, err = %s.UnmarshalMsg(bts)", lowered)
+		if b.Provider() != "" {
+			u.p.printf("\n%s, bts, err = %s().UnmarshalMsg(bts)", lowered, b.Provider())
+		} else {
+			u.p.printf("\nbts, err = %s.UnmarshalMsg(bts)", lowered)
+		}
 	default:
 		u.p.printf("\n%s, bts, err = msgp.Read%sBytes(bts)", refname, b.BaseName())
 	}

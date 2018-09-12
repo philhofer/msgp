@@ -256,11 +256,14 @@ func (f *FileSet) PrintTo(p *gen.Printer) error {
 	for _, name := range names {
 		el := f.Identities[name]
 		el.SetVarname("z")
-		pushstate(el.TypeName())
-		err := p.Print(el)
-		popstate()
-		if err != nil {
-			return err
+
+		if el.Printable() {
+			pushstate(el.TypeName())
+			err := p.Print(el)
+			popstate()
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -292,6 +295,7 @@ func (fs *FileSet) getTypeSpecs(f *ast.File) {
 						*ast.ArrayType,
 						*ast.StarExpr,
 						*ast.MapType,
+						*ast.InterfaceType,
 						*ast.Ident:
 						fs.Specs[ts.Name.Name] = ts.Type
 
@@ -539,8 +543,9 @@ func (fs *FileSet) parseExpr(e ast.Expr) gen.Elem {
 		// support `interface{}`
 		if len(e.Methods.List) == 0 {
 			return &gen.BaseElem{Value: gen.Intf}
+		} else {
+			return &gen.IntfElem{}
 		}
-		return nil
 
 	default: // other types not supported
 		return nil

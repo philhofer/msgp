@@ -1,8 +1,6 @@
 package parse
 
-import (
-	"github.com/tinylib/msgp/gen"
-)
+import "github.com/tinylib/msgp/gen"
 
 // This file defines when and how we
 // propagate type information from
@@ -49,8 +47,6 @@ func (f *FileSet) findShim(id string, be *gen.BaseElem) {
 		}
 		popstate()
 	}
-	// we'll need this at the top level as well
-	f.Identities[id] = be
 }
 
 func (f *FileSet) nextShim(ref *gen.Elem, id string, be *gen.BaseElem) {
@@ -110,7 +106,8 @@ func (f *FileSet) nextInline(ref *gen.Elem, root string) {
 		// a type into itself
 		typ := el.TypeName()
 		if el.Value == gen.IDENT && typ != root {
-			if node, ok := f.Identities[typ]; ok && node.Complexity() < maxComplex {
+			isIntercepted := gen.IsIntercepted(el)
+			if node, ok := f.Identities[typ]; ok && node.Complexity() < maxComplex && !isIntercepted {
 				infof("inlining %s\n", typ)
 
 				// This should never happen; it will cause
@@ -121,7 +118,8 @@ func (f *FileSet) nextInline(ref *gen.Elem, root string) {
 
 				*ref = node.Copy()
 				f.nextInline(ref, node.TypeName())
-			} else if !ok && !el.Resolved() {
+
+			} else if !ok && !el.Resolved() && !isIntercepted {
 				// this is the point at which we're sure that
 				// we've got a type that isn't a primitive,
 				// a library builtin, or a processed type

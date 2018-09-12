@@ -198,7 +198,11 @@ func (m *marshalGen) gBase(b *BaseElem) {
 	switch b.Value {
 	case IDENT:
 		echeck = true
-		m.p.printf("\no, err = %s.MarshalMsg(o)", vname)
+		if b.Provider() != "" {
+			m.p.printf("\no, err = %s().MarshalMsg(%s, o)", b.Provider(), vname)
+		} else {
+			m.p.printf("\no, err = %s.MarshalMsg(o)", vname)
+		}
 	case Intf, Ext:
 		echeck = true
 		m.p.printf("\no, err = msgp.Append%s(o, %s)", b.BaseName(), vname)

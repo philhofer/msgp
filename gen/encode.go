@@ -190,7 +190,11 @@ func (e *encodeGen) gBase(b *BaseElem) {
 	}
 
 	if b.Value == IDENT { // unknown identity
-		e.p.printf("\nerr = %s.EncodeMsg(en)", vname)
+		if b.Provider() != "" {
+			e.p.printf("\nerr = %s().EncodeMsg(%s, en)", b.Provider(), vname)
+		} else {
+			e.p.printf("\nerr = %s.EncodeMsg(en)", vname)
+		}
 		e.p.print(errcheck)
 	} else { // typical case
 		e.writeAndCheck(b.BaseName(), literalFmt, vname)

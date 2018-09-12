@@ -1,8 +1,6 @@
 package msgp
 
-import (
-	"math"
-)
+import "math"
 
 // Locate returns a []byte pointing to the field
 // in a messagepack map with the provided key. (The returned []byte

@@ -21,6 +21,12 @@ func randIdent() string {
 	return fmt.Sprintf("%s%04d", identPrefix, identNext)
 }
 
+// interface checks
+var (
+	_ Intercepted = &BaseElem{}
+	_ Intercepted = &Struct{}
+)
+
 // This code defines the type declaration tree.
 //
 // Consider the following:
@@ -134,6 +140,7 @@ var builtins = map[string]struct{}{
 type common struct{ vname, alias string }
 
 func (c *common) SetVarname(s string) { c.vname = s }
+func (c *common) Printable() bool     { return true }
 func (c *common) Varname() string     { return c.vname }
 func (c *common) Alias(typ string)    { c.alias = typ }
 func (c *common) hidden()             {}
@@ -177,6 +184,8 @@ type Elem interface {
 	// complexity of element (greater than
 	// or equal to 1.)
 	Complexity() int
+
+	Printable() bool
 
 	hidden()
 }
@@ -351,17 +360,49 @@ func (s *Ptr) Copy() Elem {
 func (s *Ptr) Complexity() int { return 1 + s.Value.Complexity() }
 
 func (s *Ptr) Needsinit() bool {
+	if IsIntercepted(s.Value) {
+		return false
+	}
 	if be, ok := s.Value.(*BaseElem); ok && be.needsref {
 		return false
 	}
 	return true
 }
 
+type IntfElem struct {
+	common
+	provider string // struct is intercepted
+}
+
+func (s *IntfElem) Printable() bool { return false }
+
+func (s *IntfElem) Provider() string { return s.provider }
+
+func (s *IntfElem) SetProvider(p string) { s.provider = p }
+
+func (s *IntfElem) TypeName() string {
+	return s.common.alias
+}
+
+func (s *IntfElem) Copy() Elem {
+	z := *s
+	return &z
+}
+
+func (s *IntfElem) Complexity() int {
+	return 1
+}
+
 type Struct struct {
 	common
-	Fields  []StructField // field list
-	AsTuple bool          // write as an array instead of a map
+	Fields   []StructField // field list
+	AsTuple  bool          // write as an array instead of a map
+	provider string        // struct is intercepted
 }
+
+func (s *Struct) Provider() string { return s.provider }
+
+func (s *Struct) SetProvider(p string) { s.provider = p }
 
 func (s *Struct) TypeName() string {
 	if s.common.alias != "" {
@@ -425,11 +466,16 @@ type BaseElem struct {
 	ShimFromBase string    // shim from base type, or empty
 	Value        Primitive // Type of element
 	Convert      bool      // should we do an explicit conversion?
+	provider     string    // base elem is intercepted
 	mustinline   bool      // must inline; not printable
 	needsref     bool      // needs reference for shim
 }
 
 func (s *BaseElem) Printable() bool { return !s.mustinline }
+
+func (s *BaseElem) Provider() string { return s.provider }
+
+func (s *BaseElem) SetProvider(p string) { s.provider = p }
 
 func (s *BaseElem) Alias(typ string) {
 	s.common.Alias(typ)
@@ -605,6 +651,18 @@ func writeStructFields(s []StructField, name string) {
 	for i := range s {
 		s[i].FieldElem.SetVarname(fmt.Sprintf("%s.%s", name, s[i].FieldName))
 	}
+}
+
+type Intercepted interface {
+	Provider() string
+	SetProvider(s string)
+}
+
+func IsIntercepted(e Elem) bool {
+	if p, ok := e.(Intercepted); ok {
+		return p.Provider() != ""
+	}
+	return false
 }
 
 // coerceArraySize ensures we can compare constant array lengths.
