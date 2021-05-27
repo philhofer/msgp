@@ -1,4 +1,4 @@
-MessagePack Code Generator [![Build Status](https://travis-ci.org/tinylib/msgp.svg?branch=master)](https://travis-ci.org/tinylib/msgp)
+MessagePack Code Generator [![Build Status](https://travis-ci.org/tinylib/msgp.svg?branch=master)](https://travis-ci.org/tinylib/msgp) [![GoDoc](https://godoc.org/github.com/tinylib/msgp/msgp?status.svg)](https://godoc.org/github.com/tinylib/msgp/msgp) 
 =======
 
 This is a code generation tool and serialization library for [MessagePack](http://msgpack.org). You can read more about MessagePack [in the wiki](http://github.com/tinylib/msgp/wiki), or at [msgpack.org](http://msgpack.org).
