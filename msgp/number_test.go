@@ -2,6 +2,7 @@ package msgp
 
 import (
 	"bytes"
+	"math"
 	"testing"
 )
 
@@ -94,4 +95,69 @@ func TestNumber(t *testing.T) {
 		t.Errorf("encode: expected output %#v; got %#v", dat, buf.Bytes())
 	}
 
+}
+
+func TestNumber_CastInt64(t *testing.T) {
+	var n Number
+	n.AsUint(math.MaxUint64)
+
+	_, ok := n.CastInt64()
+	if ok {
+		t.Error("CastInt64() failed: MaxUint64 > MaxInt64")
+	}
+}
+
+func TestNumber_CastInt32(t *testing.T) {
+	cases := []struct {
+		in   int64
+		want bool
+	}{
+		{math.MinInt32, true},
+		{math.MinInt32 - 1, false},
+		{math.MaxInt32, true},
+		{math.MaxInt32 + 1, false},
+		{0, true},
+	}
+
+	var n Number
+	for _, c := range cases {
+		n.AsInt(c.in)
+
+		_, ok := n.CastInt32()
+		if ok != c.want {
+			t.Errorf("cast %v to int32 invalid: %v, got %v", c.in, c.want, ok)
+		}
+	}
+}
+
+func TestNumber_CastUint64(t *testing.T) {
+	var n Number
+	n.AsInt(math.MinInt64)
+
+	_, ok := n.CastUint64()
+	if ok {
+		t.Error("CastUint64() failed: MinInt64 < 0")
+	}
+}
+
+func TestNumber_CastUint32(t *testing.T) {
+	cases := []struct {
+		in   int64
+		want bool
+	}{
+		{math.MinInt64, false},
+		{math.MaxInt32, true},
+		{math.MaxInt32 + 1, false},
+		{0, true},
+	}
+
+	var n Number
+	for _, c := range cases {
+		n.AsInt(c.in)
+
+		_, ok := n.CastUint32()
+		if ok != c.want {
+			t.Errorf("cast %v to uint32 invalid: %v, got %v", c.in, c.want, ok)
+		}
+	}
 }

@@ -91,6 +91,58 @@ func (n *Number) Float() (float64, bool) {
 	}
 }
 
+// CastInt64 returns the number as an int64 and
+// returns whether the cast is valid.
+func (n *Number) CastInt64() (int64, bool) {
+	i, ok := n.Int()
+	if !ok {
+		return 0, false
+	}
+
+	return i, true
+}
+
+// CastInt32 returns the number as an int32 and
+// returns whether the cast is valid.
+func (n *Number) CastInt32() (int32, bool) {
+	i, ok := n.CastInt64()
+	if !ok {
+		return 0, false
+	}
+
+	if i >= math.MinInt32 && i <= math.MaxInt32 {
+		return int32(i), true
+	}
+
+	return 0, false
+}
+
+// CastUint64 returns the number as an uint64 and
+// returns whether the cast is valid.
+func (n *Number) CastUint64() (uint64, bool) {
+	i, ok := n.Uint()
+	if i-1 == math.MaxInt64 && !ok {
+		return 0, false
+	}
+
+	return i, true
+}
+
+// CastUint32 returns the number as an uint32 and
+// returns whether the cast is valid.
+func (n *Number) CastUint32() (uint32, bool) {
+	i, ok := n.CastUint64()
+	if !ok {
+		return 0, false
+	}
+
+	if i <= math.MaxInt32 {
+		return uint32(i), true
+	}
+
+	return 0, false
+}
+
 // Type will return one of:
 // Float64Type, Float32Type, UintType, or IntType.
 func (n *Number) Type() Type {
