@@ -97,9 +97,12 @@ func Test1EncodeDecode(t *testing.T) {
 			ValueA: "here's the first inner value",
 			ValueB: []byte("here's the second inner value"),
 		},
-		Child:    nil,
-		Time:     time.Now(),
-		Appended: msgp.Raw([]byte{}), // 'nil'
+		Child:     nil,
+		Time:      time.Now(),
+		Appended:  msgp.Raw([]byte{}), // 'nil'
+		RuneSlice: []rune{},
+		Slice1:    []string{},
+		Slice2:    []string{},
 	}
 
 	var buf bytes.Buffer
@@ -117,8 +120,8 @@ func Test1EncodeDecode(t *testing.T) {
 	}
 
 	if !tt.Equal(tnew) {
-		t.Logf("in: %v", tt)
-		t.Logf("out: %v", tnew)
+		t.Logf("in: %#v", tt)
+		t.Logf("out: %#v", tnew)
 		t.Fatal("objects not equal")
 	}
 
