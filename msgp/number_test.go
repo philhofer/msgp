@@ -23,16 +23,31 @@ func TestNumber(t *testing.T) {
 		t.Errorf("%d in; %d out!", 248, i)
 	}
 
+	u, ok := n.CoerceUint()
+	if !ok || u != 248 {
+		t.Errorf("%d in, %d out!", 248, u)
+	}
+
 	n.AsFloat64(3.141)
 	f, ok := n.Float()
 	if !ok || f != 3.141 || n.Type() != Float64Type || n.String() != "3.141" {
 		t.Errorf("%f in; %f out!", 3.141, f)
 	}
 
+	f = n.CoerceFloat()
+	if f != 3.141 {
+		t.Errorf("%f in; %f out", 3.141, f)
+	}
+
 	n.AsUint(40000)
-	u, ok := n.Uint()
+	u, ok = n.Uint()
 	if !ok || u != 40000 || n.Type() != UintType || n.String() != "40000" {
 		t.Errorf("%d in; %d out!", 40000, u)
+	}
+
+	i, ok = n.CoerceInt()
+	if !ok || i != 40000 {
+		t.Errorf("%d in; %d out!", 40000, i)
 	}
 
 	nums := []interface{}{

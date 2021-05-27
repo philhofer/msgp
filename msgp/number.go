@@ -91,6 +91,70 @@ func (n *Number) Float() (float64, bool) {
 	}
 }
 
+// CoerceInt attempts to coerce the value of
+// the number into a signed integer, and returns
+// whether or not it was successful. "Success"
+// implies that no precision in the value of
+// the number was lost, which means that the
+// type of the number was an integer or 
+// a floating point 0.
+func (n *Number) CoerceInt() (int64, bool) {
+	switch n.typ {
+	case InvalidType, IntType:
+		return int64(n.bits), true
+	case UintType:
+		return int64(n.bits), n.bits <= math.MaxInt64
+	case Float32Type:
+		return 0, n.bits == 0 || n.bits == 1<<31
+	case Float64Type:
+		return 0, n.bits == 0 || n.bits == 1<<63
+	}
+	return 0, false
+}
+
+// CoerceUint attempts to coerce the value of
+// the number into an unsigned integer, and
+// returns whether or not it was successful.
+// "Success" implies that no precision in the
+// value of the number was lost (see CoerceInt()).
+func (n *Number) CoerceUint() (uint64, bool) {
+	switch n.typ {
+	case InvalidType:
+		return 0, true
+	case IntType:
+		return n.bits, int64(n.bits) >= 0
+	case UintType:
+		return n.bits, true
+	case Float32Type:
+		return 0, n.bits == 0 || n.bits == 1<<31
+	case Float64Type:
+		return 0, n.bits == 0 || n.bits == 1<<63
+	}
+	return 0, false
+}
+
+// CoerceFloat coerces the value of the
+// number to a float64. Some precision may
+// be lost in the conversion if the type
+// of the number was not originally a
+// float64. (However, zero is always
+// converted precisely.)
+func (n *Number) CoerceFloat() float64 {
+	switch n.typ {
+	case InvalidType:
+		return 0
+	case IntType:
+		return float64(int64(n.bits))
+	case UintType:
+		return float64(uint64(n.bits))
+	case Float32Type:
+		return float64(math.Float32frombits(uint32(n.bits)))
+	case Float64Type:
+		return math.Float64frombits(n.bits)
+	}
+	return 0
+}
+
 // Type will return one of:
 // Float64Type, Float32Type, UintType, or IntType.
 func (n *Number) Type() Type {
