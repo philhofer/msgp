@@ -1,6 +1,7 @@
 package _generated
 
 import (
+	"math/big"
 	"os"
 	"time"
 
@@ -262,4 +263,20 @@ type NonMsgStructTags struct {
 			B []string `msg:"bbbb" xml:"-"`
 		}
 	}
+}
+
+//msgp:shim big.Int as:[]byte using:i2b/b2i
+
+func b2i(b []byte) big.Int {
+	var i big.Int
+	i.SetBytes(b)
+	return i
+}
+
+func i2b(i big.Int) []byte {
+	return i.Bytes()
+}
+
+type Issue203 struct {
+	Value big.Int `msg:"value"`
 }
